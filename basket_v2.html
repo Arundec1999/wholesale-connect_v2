@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Buyer – Basket</title>
+
+<style>
+:root{
+  --bg:#f4f6f8;
+  --card:#ffffff;
+  --border:#e2e2e2;
+  --primary:#000;
+  --muted:#666;
+  --notice:#fff6d6;
+  --notice-border:#f2d98b;
+  --radius:10px;
+}
+
+*{box-sizing:border-box}
+
+body{
+  font-family: Inter, Arial, sans-serif;
+  background:var(--bg);
+  margin:0;
+  color:#111;
+}
+
+/* HEADER */
+header{
+  background:#fff;
+  padding:14px 18px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+header a{
+  text-decoration:none;
+  color:#000;
+  font-size:13px;
+}
+
+/* LAYOUT */
+.container{
+  max-width:900px;
+  margin:20px auto;
+  padding:0 16px;
+}
+
+/* NOTICE */
+.notice{
+  background:var(--notice);
+  border:1px solid var(--notice-border);
+  padding:12px;
+  border-radius:8px;
+  margin-bottom:14px;
+  font-size:13px;
+}
+
+/* CARD */
+.card{
+  background:var(--card);
+  padding:14px;
+  border-radius:var(--radius);
+  border:1px solid var(--border);
+  margin-bottom:12px;
+}
+
+.card b{
+  font-size:14px;
+}
+
+.card small{
+  display:block;
+  color:var(--muted);
+  margin-top:4px;
+}
+
+/* TOTAL */
+.summary{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px;
+  margin-top:14px;
+}
+
+.total{
+  font-weight:600;
+  font-size:17px;
+  text-align:right;
+}
+
+/* EMPTY */
+.empty{
+  text-align:center;
+  color:#777;
+  font-size:14px;
+  padding:30px 0;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <b>My Basket</b>
+  <a href="buyer-feed.html">← Back to Products</a>
+</header>
+
+<div class="container">
+
+  <div id="notice" class="notice" style="display:none;"></div>
+
+  <div id="basket">Loading basket…</div>
+
+</div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbzOutSpXzb0zfR5ZkJ1iq-1a1m4WImhpvn26M5oMxXzTb9J28o2rJWRG26IA2dEV3us/exec";
+const BUYER_ID = "BUY001";
+const SUPPLIER_ID = "SUP001";
+
+fetch(`${API}?action=getSupplierBaskets&supplierId=${SUPPLIER_ID}`)
+  .then(r => r.json())
+  .then(j => {
+    const baskets = j.data || [];
+    const basket = baskets.find(b => b.buyerId === BUYER_ID);
+
+    if (!basket || basket.items.length === 0) {
+      document.getElementById("basket").innerHTML =
+        "<div class='empty'>Your basket is empty.</div>";
+      return;
+    }
+
+    renderBasket(basket);
+  });
+
+function renderBasket(b){
+  let html = "";
+  let grandTotal = 0;
+
+  b.items.forEach(i => {
+    const amount = i.pcs * i.pricePerPC;
+    const gstAmt = amount * i.gstPercent / 100;
+    const total = amount + gstAmt;
+
+    grandTotal += total;
+
+    html += `
+      <div class="card">
+        <b>${i.productName}</b>
+        <small>Sets: ${i.sets} · Pcs: ${i.pcs}</small>
+        <small>Rate: ₹${i.pricePerPC} + ${i.gstPercent}% GST</small>
+        <small><b>Item Total:</b> ₹${total.toFixed(2)}</small>
+      </div>
+    `;
+  });
+
+  html += `
+    <div class="summary">
+      <div class="total">Grand Total: ₹${grandTotal.toFixed(2)}</div>
+    </div>
+  `;
+
+  document.getElementById("basket").innerHTML = html;
+
+  document.getElementById("notice").style.display = "block";
+  document.getElementById("notice").innerText =
+    "Basket has been shared with the supplier for approval. Stock will be locked once approved.";
+}
+</script>
+
+</body>
+</html>
