@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Supplier Dashboard</title>
+
+<style>
+:root{
+  --bg:#f4f6f8;
+  --card:#ffffff;
+  --border:#e2e2e2;
+  --primary:#000000;
+  --muted:#666;
+  --radius:10px;
+}
+
+*{box-sizing:border-box}
+
+body{
+  font-family: Inter, Arial, sans-serif;
+  background:var(--bg);
+  margin:0;
+  color:#111;
+}
+
+/* HEADER */
+header{
+  background:#fff;
+  padding:14px 20px;
+  border-bottom:1px solid var(--border);
+  font-size:16px;
+  font-weight:600;
+}
+
+/* LAYOUT */
+.container{
+  max-width:1100px;
+  margin:20px auto;
+  padding:0 16px;
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap:18px;
+}
+
+/* CARD */
+.card{
+  background:var(--card);
+  padding:18px;
+  border-radius:var(--radius);
+  border:1px solid var(--border);
+}
+
+.card h4{
+  margin:0 0 14px 0;
+  font-size:15px;
+  border-bottom:1px solid var(--border);
+  padding-bottom:8px;
+}
+
+/* FORM ELEMENTS */
+label{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:12px;
+  display:block;
+}
+
+input, textarea{
+  width:100%;
+  margin-top:6px;
+  padding:9px 10px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  font-size:13px;
+}
+
+textarea{
+  resize:vertical;
+  min-height:70px;
+}
+
+/* BUTTONS */
+button{
+  margin-top:14px;
+  padding:10px 14px;
+  background:var(--primary);
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  font-size:13px;
+  cursor:pointer;
+}
+
+button.secondary{
+  background:#444;
+}
+
+button.ghost{
+  background:#fff;
+  color:#000;
+  border:1px solid var(--border);
+}
+
+button + button{
+  margin-left:6px;
+}
+
+/* STOCK AREA */
+.batch-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:10px;
+}
+
+/* BASKETS */
+.basket{
+  border:1px solid var(--border);
+  padding:12px;
+  border-radius:8px;
+  margin-top:12px;
+  background:#fafafa;
+}
+
+.basket b{
+  font-size:13px;
+}
+
+.basket small{
+  display:block;
+  color:#555;
+  margin-top:4px;
+}
+
+.actions{
+  margin-top:10px;
+  display:flex;
+  gap:8px;
+}
+
+/* EMPTY STATES */
+.empty{
+  font-size:13px;
+  color:#777;
+  padding:8px 0;
+}
+</style>
+</head>
+
+<body>
+
+<header>Supplier Dashboard</header>
+
+<div class="container">
+
+  <!-- ADD PRODUCT -->
+  <div class="card">
+    <h4>Add Product</h4>
+
+    <label>Product Code</label>
+    <input id="pCode" placeholder="Internal product code">
+
+    <label>Product Name</label>
+    <input id="pName" placeholder="Product display name">
+
+    <label>Description</label>
+    <textarea id="pDesc" placeholder="Product description"></textarea>
+
+    <label>Sizes</label>
+    <input id="pSizes" placeholder="M, L, XL">
+
+    <label>Price per PC</label>
+    <input id="pPrice" placeholder="₹">
+
+    <label>GST %</label>
+    <input id="pGST" placeholder="e.g. 5">
+
+    <label>Image URLs</label>
+    <input id="pImages" placeholder="Comma separated URLs">
+
+    <button onclick="addProduct()">Save Product</button>
+  </div>
+
+  <!-- STOCK UPDATE -->
+  <div class="card">
+    <h4>Stock Update</h4>
+
+    <div class="batch-actions">
+      <button onclick="startBatch()">Start Batch</button>
+      <button class="secondary" onclick="publish()">Publish Batch</button>
+    </div>
+
+    <label>Product Code</label>
+    <input id="sCode" placeholder="Product code">
+
+    <label>Total Sets</label>
+    <input id="sQty" placeholder="Number of sets">
+
+    <button onclick="addToBatch()">Add Product to Batch</button>
+  </div>
+
+  <!-- PENDING BASKETS -->
+  <div class="card">
+    <h4>Pending Baskets</h4>
+    <div id="baskets" class="empty">Loading baskets…</div>
+  </div>
+
+</div>
+
+<script>
+const API="https://script.google.com/macros/s/AKfycbzOutSpXzb0zfR5ZkJ1iq-1a1m4WImhpvn26M5oMxXzTb9J28o2rJWRG26IA2dEV3us/exec";
+const SUPPLIER_ID="SUP001";
+let batchId=null;
+
+/* ---------------- ADD PRODUCT ---------------- */
+function addProduct(){
+fetch(`${API}?action=addProduct`
+ + `&supplierId=${SUPPLIER_ID}`
+ + `&productCode=${pCode.value}`
+ + `&productName=${pName.value}`
+ + `&description=${encodeURIComponent(pDesc.value)}`
+ + `&sizesJSON=${encodeURIComponent(JSON.stringify(pSizes.value.split(",").map(s=>s.trim())))}`
+ + `&pricePerPC=${pPrice.value}`
+ + `&gstPercent=${pGST.value}`
+ + `&imageURLsJSON=${encodeURIComponent(JSON.stringify(pImages.value.split(",").map(i=>i.trim())))}`
+).then(()=>alert("Product added"));
+}
+
+/* ---------------- BATCH FLOW ---------------- */
+function startBatch(){
+fetch(`${API}?action=startBatch&supplierId=${SUPPLIER_ID}`)
+.then(r=>r.json())
+.then(j=>{
+  batchId=j.data.batchId;
+  alert("Batch started");
+});
+}
+
+function addToBatch(){
+if(!batchId){ alert("Start batch first"); return; }
+fetch(`${API}?action=addProductToBatch&batchId=${batchId}&productCode=${sCode.value}&totalSets=${sQty.value}`)
+.then(()=>alert("Product added to batch"));
+}
+
+function publish(){
+if(!batchId){ alert("No active batch"); return; }
+fetch(`${API}?action=publishBatch&batchId=${batchId}`)
+.then(()=>{
+  alert("Batch published");
+  batchId=null;
+  loadBaskets();
+});
+}
+
+/* ---------------- BASKETS ---------------- */
+function loadBaskets(){
+fetch(`${API}?action=getSupplierBaskets&supplierId=${SUPPLIER_ID}`)
+.then(r=>r.json())
+.then(j=>renderBaskets(j.data||[]));
+}
+
+function renderBaskets(list){
+const el=document.getElementById("baskets");
+el.innerHTML="";
+
+if(!list.length){
+  el.innerHTML=`<div class="empty">No pending baskets</div>`;
+  return;
+}
+
+list.forEach(b=>{
+let html=`<div class="basket">
+<b>Buyer:</b> ${b.buyerId}`;
+b.items.forEach(i=>{
+  html+=`<small>${i.productCode} — ${i.sets} sets</small>`;
+});
+html+=`
+<div class="actions">
+<button onclick="approve('${b.basketId}')">Approve</button>
+<button class="secondary" onclick="pay('${b.basketId}')">Confirm Payment</button>
+</div></div>`;
+el.innerHTML+=html;
+});
+}
+
+function approve(id){
+fetch(`${API}?action=approveBasket&basketId=${id}`)
+.then(()=>{ alert("Basket approved"); loadBaskets(); });
+}
+
+function pay(id){
+fetch(`${API}?action=confirmPayment&basketId=${id}`)
+.then(()=>{ alert("Payment confirmed"); loadBaskets(); });
+}
+
+loadBaskets();
+</script>
+
+</body>
+</html>
