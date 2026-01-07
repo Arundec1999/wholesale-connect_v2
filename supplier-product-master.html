@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Product Master</title>
+
+<style>
+body{
+  font-family:Arial, sans-serif;
+  background:#f5f5f5;
+  margin:0;
+  padding:20px;
+}
+.container{
+  display:grid;
+  grid-template-columns: 360px 1fr;
+  gap:20px;
+}
+.card{
+  background:#fff;
+  border-radius:12px;
+  padding:16px;
+  box-shadow:0 6px 16px rgba(0,0,0,.08);
+}
+h2{margin-top:0}
+input, textarea{
+  width:100%;
+  padding:8px;
+  margin-bottom:10px;
+  border:1px solid #ddd;
+  border-radius:6px;
+}
+button{
+  background:#000;
+  color:#fff;
+  border:none;
+  padding:10px;
+  border-radius:8px;
+  cursor:pointer;
+}
+.product{
+  display:flex;
+  gap:12px;
+  padding:12px 0;
+  border-bottom:1px solid #eee;
+}
+.product img{
+  width:70px;
+  height:70px;
+  border-radius:8px;
+  object-fit:cover;
+}
+.product-info{
+  flex:1;
+  font-size:14px;
+}
+.product-info small{
+  color:#666;
+}
+.search{
+  margin-bottom:12px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- LEFT: ADD / EDIT PRODUCT -->
+<div class="card">
+<h2>Add Product</h2>
+
+<input id="code" placeholder="Product Code">
+<input id="name" placeholder="Product Name">
+<textarea id="desc" placeholder="Description"></textarea>
+<input id="sizes" placeholder="Sizes (M, L, XL)">
+<input id="price" placeholder="Price per PC">
+<input id="gst" placeholder="GST %">
+<input id="images" placeholder="Image URLs (comma separated)">
+
+<button onclick="saveProduct()">Save Product</button>
+</div>
+
+<!-- RIGHT: PRODUCT LIST -->
+<div class="card">
+<h2>All Products</h2>
+
+<input class="search" placeholder="Search product...">
+
+<div id="productList"></div>
+</div>
+
+</div>
+
+<script>
+// -------- DUMMY DATA ----------
+let products = [
+  {
+    code:"P001",
+    name:"Linen Kurta Set",
+    sizes:"M,L,XL",
+    price:1200,
+    img:"https://via.placeholder.com/70"
+  },
+  {
+    code:"P002",
+    name:"Cotton Suit Set",
+    sizes:"S,M,L",
+    price:1500,
+    img:"https://via.placeholder.com/70"
+  }
+];
+
+// -------- RENDER PRODUCTS ----------
+function renderProducts(){
+  const list = document.getElementById("productList");
+  list.innerHTML = "";
+  products.forEach(p=>{
+    list.innerHTML += `
+      <div class="product">
+        <img src="${p.img}">
+        <div class="product-info">
+          <strong>${p.name}</strong><br>
+          <small>Code: ${p.code}</small><br>
+          Sizes: ${p.sizes}<br>
+          ₹${p.price}
+        </div>
+        <button onclick="editProduct('${p.code}')">Edit</button>
+      </div>
+    `;
+  });
+}
+
+// -------- SAVE PRODUCT ----------
+function saveProduct(){
+  const p = {
+    code:code.value,
+    name:name.value,
+    sizes:sizes.value,
+    price:price.value,
+    img:images.value.split(",")[0] || "https://via.placeholder.com/70"
+  };
+  products.unshift(p);
+  renderProducts();
+  alert("Product saved (UI only)");
+}
+
+// -------- EDIT PRODUCT ----------
+function editProduct(code){
+  const p = products.find(x=>x.code===code);
+  code.value = p.code;
+  name.value = p.name;
+  sizes.value = p.sizes;
+  price.value = p.price;
+}
+
+// init
+renderProducts();
+</script>
+
+</body>
+</html>
