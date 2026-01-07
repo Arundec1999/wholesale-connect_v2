@@ -6,7 +6,7 @@
 
 <style>
 :root{
-  --bg:#f4f6f8;
+  --bg:#efeae2;
   --card:#ffffff;
   --border:#e2e2e2;
   --primary:#000;
@@ -20,89 +20,116 @@ body{
   font-family: Inter, Arial, sans-serif;
   background:var(--bg);
   margin:0;
-  color:#111;
 }
 
 /* HEADER */
 header{
   background:#fff;
-  padding:14px 18px;
+  padding:12px 16px;
   border-bottom:1px solid var(--border);
   font-weight:600;
 }
 
-/* FEED CONTAINER */
+/* FEED */
 #feed{
-  max-width:1000px;
-  margin:20px auto;
-  padding:0 16px;
+  max-width:420px;
+  margin:0 auto;
+  padding:14px;
 }
 
-/* BATCH BLOCK */
-.batch{
-  margin-bottom:26px;
+/* SUPPLIER HEADER */
+.supplier{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:8px;
 }
 
-.batch small{
+.supplier img{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  object-fit:cover;
+}
+
+.supplier b{
+  font-size:14px;
+}
+
+/* BATCH TIME */
+.batch-time{
+  font-size:11px;
   color:var(--muted);
-  font-size:12px;
+  margin-bottom:6px;
 }
 
 /* PRODUCT CARD */
 .card{
   background:var(--card);
-  padding:12px;
-  margin-top:10px;
-  border-radius:var(--radius);
-  border:1px solid var(--border);
-  display:flex;
-  gap:14px;
-  align-items:flex-start;
+  border-radius:12px;
+  padding:10px;
+  margin-bottom:18px;
+  box-shadow:0 1px 2px rgba(0,0,0,0.08);
 }
 
-.card img{
-  width:80px;
-  height:110px;
+/* IMAGE GRID */
+.images{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:4px;
+}
+
+.images img{
+  width:100%;
+  height:140px;
   object-fit:cover;
   border-radius:6px;
-  border:1px solid var(--border);
+  cursor:pointer;
 }
 
 /* PRODUCT INFO */
 .info{
-  flex:1;
+  margin-top:8px;
 }
 
 .info b{
   font-size:14px;
 }
 
-.info p{
-  font-size:13px;
-  color:#444;
-  margin:6px 0;
-}
-
 .info small{
   display:block;
-  font-size:12px;
-  color:var(--muted);
+  color:#555;
   margin-top:3px;
+  font-size:12px;
 }
 
 /* ACTION */
-.actions{
-  margin-top:8px;
-}
-
 button{
-  padding:7px 12px;
+  margin-top:8px;
+  padding:8px 12px;
   background:#000;
   color:#fff;
   border:none;
   border-radius:6px;
   font-size:12px;
   cursor:pointer;
+}
+
+/* IMAGE PREVIEW */
+#preview{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.85);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+
+#preview img{
+  max-width:90%;
+  max-height:90%;
+  border-radius:8px;
 }
 </style>
 </head>
@@ -113,8 +140,12 @@ button{
 
 <div id="feed"></div>
 
+<div id="preview" onclick="this.style.display='none'">
+  <img id="previewImg">
+</div>
+
 <script>
-/* BACKEND: Wholesale_Backend_v2 (Improvement Environment) */
+/* BACKEND: Wholesale_Backend_v2 */
 const API="https://script.google.com/macros/s/AKfycbw6Mc4ay2_69EzczKSkigCMxuWFlJ4P986cpuOw9P0rnvsoSeOONWCKRrEphio2513v/exec";
 
 const BUYER_ID="BUY001";
@@ -123,36 +154,49 @@ const SUPPLIER_ID="SUP001";
 fetch(`${API}?action=getSupplierUpdates&supplierId=${SUPPLIER_ID}`)
 .then(r=>r.json())
 .then(j=>{
-  (j.data || []).forEach(b=>{
-    const d=document.createElement("div");
-    d.className="batch";
-    d.innerHTML=`<small>${new Date(b.batchTime).toLocaleString()}</small>`;
+  (j.data||[]).forEach(b=>{
+    const wrap=document.createElement("div");
+
+    wrap.innerHTML=`
+      <div class="supplier">
+        <img src="https://i.imgur.com/0y0y0y0.png">
+        <b>MN Fashions Buyer Club A</b>
+      </div>
+      <div class="batch-time">
+        ${new Date(b.batchTime).toLocaleString()}
+      </div>
+    `;
 
     b.products.forEach(p=>{
-      d.innerHTML+=`
+      const imgs=p.imageURLs || [];
+      let grid="";
+
+      imgs.slice(0,4).forEach((u,i)=>{
+        grid+=`<img src="${u}" onclick="openImg('${u}')">`;
+      });
+
+      wrap.innerHTML+=`
         <div class="card">
-          <img src="${p.imageURLs[0] || ''}">
+          <div class="images">${grid}</div>
           <div class="info">
             <b>${p.productName}</b>
-            <p>${p.description || ''}</p>
+            <small>${p.description||""}</small>
             <small>Sizes: ${p.sizes.join(", ")}</small>
             <small>₹${p.pricePerPC} + ${p.gstPercent}% GST</small>
-            <div class="actions">
-              <button onclick="add('${b.batchId}','${p.productCode}')">
-                Add to Basket
-              </button>
-            </div>
+            <button onclick="add('${b.batchId}','${p.productCode}')">
+              Add to Basket
+            </button>
           </div>
         </div>
       `;
     });
 
-    feed.appendChild(d);
+    feed.appendChild(wrap);
   });
 });
 
 function add(batch,code){
-  const s=prompt("Enter number of sets");
+  const s=prompt("Enter sets");
   fetch(`${API}?action=addToBasket`
     + `&buyerId=${BUYER_ID}`
     + `&supplierId=${SUPPLIER_ID}`
@@ -160,6 +204,11 @@ function add(batch,code){
     + `&productCode=${code}`
     + `&sets=${s}`
   ).then(()=>alert("Added to basket"));
+}
+
+function openImg(src){
+  previewImg.src=src;
+  preview.style.display="flex";
 }
 </script>
 
