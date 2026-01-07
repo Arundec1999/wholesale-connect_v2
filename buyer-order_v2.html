@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>My Orders</title>
+
+<style>
+:root{
+  --bg:#efeae2;
+  --card:#ffffff;
+  --border:#e5e5e5;
+  --primary:#000;
+  --muted:#6b6b6b;
+  --radius:14px;
+}
+
+*{box-sizing:border-box}
+
+body{
+  font-family: Inter, Arial, sans-serif;
+  background:var(--bg);
+  margin:0;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* HEADER */
+header{
+  background:#fff;
+  padding:12px 18px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+header a{
+  font-size:13px;
+  color:#000;
+  text-decoration:none;
+}
+
+/* CONTENT */
+.container{
+  flex:1;
+  overflow-y:auto;
+}
+
+.content-inner{
+  max-width:420px;
+  margin:0 auto;
+  padding:18px 12px;
+}
+
+/* ORDER CARD */
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:14px;
+  margin-bottom:16px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.08);
+}
+
+.card b{
+  font-size:14px;
+}
+
+.card small{
+  display:block;
+  font-size:12px;
+  color:#555;
+  margin-top:4px;
+}
+
+/* STATUS */
+.status{
+  margin-top:8px;
+  font-size:13px;
+}
+
+.status span{
+  display:inline-block;
+  margin-top:4px;
+  font-weight:600;
+}
+
+.status .created{
+  color:#444;
+}
+
+.status .paid{
+  color:#1a7f37;
+}
+
+.status .dispatched{
+  color:#0a58ca;
+}
+
+/* BUTTON */
+button{
+  margin-top:10px;
+  padding:9px 14px;
+  background:#000;
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  font-size:13px;
+  cursor:pointer;
+}
+
+/* EMPTY */
+.empty{
+  text-align:center;
+  color:#777;
+  padding:40px 0;
+  font-size:14px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <b>My Orders</b>
+  <a href="buyer-feed_v5.html">← Back to Feed</a>
+</header>
+
+<div class="container">
+  <div class="content-inner" id="orders">
+    Loading orders…
+  </div>
+</div>
+
+<script>
+/* BACKEND: Wholesale_Backend_v2 */
+const API="https://script.google.com/macros/s/AKfycbw6Mc4ay2_69EzczKSkigCMxuWFlJ4P986cpuOw9P0rnvsoSeOONWCKRrEphio2513v/exec";
+const BUYER_ID="BUY001";
+
+/* Load buyer orders */
+fetch(`${API}?action=getOrdersForBuyer&buyerId=${BUYER_ID}`)
+  .then(r=>r.json())
+  .then(j=>render(j.data||[]));
+
+function render(list){
+  const el=document.getElementById("orders");
+  el.innerHTML=list.length ? "" : "<div class='empty'>No orders yet</div>";
+
+  list.forEach(o=>{
+    const orderId=o.orderId||o[0];
+    const supplierId=o.supplierId||o[2];
+    const orderStatus=o.orderStatus||o[5];
+    const dispatchStatus=o.dispatchStatus||o[7];
+    const transport=o.transport||o[8];
+    const tracking=o.tracking||o[9];
+
+    const div=document.createElement("div");
+    div.className="card";
+
+    div.innerHTML=`
+      <b>Order ID:</b> ${orderId}
+      <small>Supplier: ${supplierId}</small>
+
+      <div class="status">
+        <span class="paid">Order: ${orderStatus}</span><br>
+        <span class="${dispatchStatus==='DISPATCHED'?'dispatched':'created'}">
+          Dispatch: ${dispatchStatus}
+        </span>
+      </div>
+
+      ${dispatchStatus==="DISPATCHED" ? `
+        <small>Transport: ${transport||"-"}</small>
+        <small>Tracking / LR: ${tracking||"-"}</small>
+      ` : ""}
+
+      <button onclick="printOrder('${orderId}')">
+        Print Order
+      </button>
+    `;
+
+    el.appendChild(div);
+  });
+}
+
+function printOrder(orderId){
+  window.open(
+    `${API}?action=printOrder&orderId=${orderId}`,
+    "_blank"
+  );
+}
+</script>
+
+</body>
+</html>
