@@ -8,10 +8,10 @@
 :root{
   --bg:#efeae2;
   --card:#ffffff;
-  --border:#e2e2e2;
+  --border:#e5e5e5;
   --primary:#000;
-  --muted:#666;
-  --radius:10px;
+  --muted:#6b6b6b;
+  --radius:14px;
 }
 
 *{box-sizing:border-box}
@@ -24,7 +24,7 @@ body{
   height:100vh;
 }
 
-/* LEFT SIDEBAR */
+/* ---------------- SIDEBAR ---------------- */
 .sidebar{
   width:280px;
   background:#fff;
@@ -34,15 +34,16 @@ body{
 
 .sidebar h3{
   margin:0;
-  padding:14px;
+  padding:16px;
+  font-size:16px;
   border-bottom:1px solid var(--border);
 }
 
 .supplier-item{
   display:flex;
   align-items:center;
-  gap:10px;
-  padding:12px 14px;
+  gap:12px;
+  padding:14px 16px;
   cursor:pointer;
 }
 
@@ -52,13 +53,17 @@ body{
 }
 
 .supplier-item img{
-  width:40px;
-  height:40px;
+  width:44px;
+  height:44px;
   border-radius:50%;
   object-fit:cover;
 }
 
-/* MAIN FEED */
+.supplier-item div{
+  font-size:14px;
+}
+
+/* ---------------- MAIN ---------------- */
 .main{
   flex:1;
   display:flex;
@@ -68,16 +73,16 @@ body{
 /* HEADER */
 header{
   background:#fff;
-  padding:12px 16px;
+  padding:12px 18px;
   border-bottom:1px solid var(--border);
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:12px;
 }
 
 header img{
-  width:36px;
-  height:36px;
+  width:38px;
+  height:38px;
   border-radius:50%;
 }
 
@@ -85,67 +90,92 @@ header img{
 #feed{
   flex:1;
   overflow-y:auto;
-  padding:14px;
-  max-width:460px;
-  margin:0 auto;
+  padding:18px 0;
 }
 
-/* BATCH TIME */
+.feed-inner{
+  max-width:420px;
+  margin:0 auto;
+  padding:0 12px;
+}
+
+/* TIMESTAMP */
 .batch-time{
+  text-align:center;
   font-size:11px;
   color:var(--muted);
-  margin:12px 0 6px;
+  margin:18px 0 10px;
 }
 
-/* CARD */
+/* ---------------- PRODUCT CARD ---------------- */
 .card{
   background:var(--card);
-  border-radius:12px;
+  border-radius:var(--radius);
   padding:10px;
-  margin-bottom:18px;
-  box-shadow:0 1px 2px rgba(0,0,0,0.08);
+  margin-bottom:20px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.08);
 }
 
 /* IMAGE GRID */
 .images{
   display:grid;
   grid-template-columns:repeat(2,1fr);
-  gap:4px;
+  gap:6px;
 }
 
-.images img{
+.image-box{
+  position:relative;
+  overflow:hidden;
+  border-radius:10px;
+}
+
+.image-box img{
   width:100%;
-  height:140px;
+  height:160px;
   object-fit:cover;
-  border-radius:6px;
+  display:block;
+  cursor:pointer;
+}
+
+/* +X overlay */
+.overlay{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,0.55);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  font-weight:600;
   cursor:pointer;
 }
 
 /* INFO */
 .info{
-  margin-top:8px;
+  margin-top:10px;
 }
 
 .info b{
-  font-size:14px;
+  font-size:15px;
 }
 
 .info small{
   display:block;
-  font-size:12px;
+  font-size:13px;
   color:#555;
-  margin-top:3px;
+  margin-top:4px;
 }
 
 /* BUTTON */
 button{
-  margin-top:8px;
-  padding:8px 12px;
+  margin-top:10px;
+  padding:9px 14px;
   background:#000;
   color:#fff;
   border:none;
-  border-radius:6px;
-  font-size:12px;
+  border-radius:8px;
+  font-size:13px;
   cursor:pointer;
 }
 
@@ -153,7 +183,7 @@ button{
 #preview{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,0.85);
+  background:rgba(0,0,0,0.9);
   display:none;
   align-items:center;
   justify-content:center;
@@ -161,9 +191,9 @@ button{
 }
 
 #preview img{
-  max-width:90%;
-  max-height:90%;
-  border-radius:8px;
+  max-width:92%;
+  max-height:92%;
+  border-radius:10px;
 }
 </style>
 </head>
@@ -172,19 +202,19 @@ button{
 
 <!-- SIDEBAR -->
 <div class="sidebar">
-  <h3>Suppliers</h3>
+  <h3>Stock Updates</h3>
   <div id="supplierList"></div>
 </div>
 
 <!-- MAIN -->
 <div class="main">
+  <header id="topBar">
+    <span>Select a supplier</span>
+  </header>
 
-<header id="topBar">
-  <span>Select a supplier</span>
-</header>
-
-<div id="feed"></div>
-
+  <div id="feed">
+    <div class="feed-inner" id="feedInner"></div>
+  </div>
 </div>
 
 <!-- IMAGE PREVIEW -->
@@ -193,20 +223,18 @@ button{
 </div>
 
 <script>
-/* BACKEND: Wholesale_Backend_v2 */
 const API="https://script.google.com/macros/s/AKfycbw6Mc4ay2_69EzczKSkigCMxuWFlJ4P986cpuOw9P0rnvsoSeOONWCKRrEphio2513v/exec";
-
 const BUYER_ID="BUY001";
 
-/* FRONTEND SUPPLIER DIRECTORY (can come from DB later) */
+/* TEMP SUPPLIER LIST */
 const suppliers=[
-  {id:"SUP001", name:"MN Fashions Buyer Club A", img:"https://i.imgur.com/0y0y0y0.png"},
-  {id:"SUP002", name:"AURA Jaipur", img:"https://i.imgur.com/0y0y0y0.png"},
-  {id:"SUP003", name:"Dolly Ethnic Wear", img:"https://i.imgur.com/0y0y0y0.png"}
+  {id:"SUP001",name:"MN Fashions Buyer Club A",img:"https://i.imgur.com/0y0y0y0.png"},
+  {id:"SUP002",name:"AURA Jaipur",img:"https://i.imgur.com/0y0y0y0.png"},
+  {id:"SUP003",name:"Dolly Ethnic Wear",img:"https://i.imgur.com/0y0y0y0.png"}
 ];
 
 const supplierList=document.getElementById("supplierList");
-const feed=document.getElementById("feed");
+const feedInner=document.getElementById("feedInner");
 const topBar=document.getElementById("topBar");
 
 suppliers.forEach(s=>{
@@ -220,51 +248,62 @@ suppliers.forEach(s=>{
 function selectSupplier(s,el){
   document.querySelectorAll(".supplier-item").forEach(i=>i.classList.remove("active"));
   el.classList.add("active");
-
   topBar.innerHTML=`<img src="${s.img}"><b>${s.name}</b>`;
   loadFeed(s.id);
 }
 
 function loadFeed(supplierId){
-  feed.innerHTML="";
+  feedInner.innerHTML="";
 
   fetch(`${API}?action=getSupplierUpdates&supplierId=${supplierId}`)
   .then(r=>r.json())
   .then(j=>{
-    /* IMPORTANT: oldest → newest (WhatsApp style) */
-    (j.data||[]).sort((a,b)=>new Date(a.batchTime)-new Date(b.batchTime))
-    .forEach(b=>{
-      const t=document.createElement("div");
-      t.className="batch-time";
-      t.innerText=new Date(b.batchTime).toLocaleString();
-      feed.appendChild(t);
-
-      b.products.forEach(p=>{
-        const card=document.createElement("div");
-        card.className="card";
-
-        let imgs="";
-        (p.imageURLs||[]).slice(0,4).forEach(u=>{
-          imgs+=`<img src="${u}" onclick="openImg('${u}')">`;
-        });
-
-        card.innerHTML=`
-          <div class="images">${imgs}</div>
-          <div class="info">
-            <b>${p.productName}</b>
-            <small>${p.description||""}</small>
-            <small>Sizes: ${p.sizes.join(", ")}</small>
-            <small>₹${p.pricePerPC} + ${p.gstPercent}% GST</small>
-            <button onclick="add('${b.batchId}','${p.productCode}','${supplierId}')">
-              Add to Basket
-            </button>
+    (j.data||[])
+      .sort((a,b)=>new Date(a.batchTime)-new Date(b.batchTime))
+      .forEach(b=>{
+        feedInner.innerHTML+=`
+          <div class="batch-time">
+            ${new Date(b.batchTime).toLocaleString()}
           </div>
         `;
-        feed.appendChild(card);
-      });
-    });
 
-    feed.scrollTop=feed.scrollHeight; // WhatsApp behaviour
+        b.products.forEach(p=>{
+          const imgs=p.imageURLs||[];
+          let grid="";
+
+          imgs.slice(0,4).forEach((u,i)=>{
+            if(i===3 && imgs.length>4){
+              grid+=`
+                <div class="image-box" onclick="openImg('${u}')">
+                  <img src="${u}">
+                  <div class="overlay">+${imgs.length-3}</div>
+                </div>`;
+            }else{
+              grid+=`
+                <div class="image-box">
+                  <img src="${u}" onclick="openImg('${u}')">
+                </div>`;
+            }
+          });
+
+          feedInner.innerHTML+=`
+            <div class="card">
+              <div class="images">${grid}</div>
+              <div class="info">
+                <b>${p.productName}</b>
+                <small>${p.description||""}</small>
+                <small>Sizes: ${p.sizes.join(", ")}</small>
+                <small>₹${p.pricePerPC} + ${p.gstPercent}% GST</small>
+                <button onclick="add('${b.batchId}','${p.productCode}','${supplierId}')">
+                  Add to Basket
+                </button>
+              </div>
+            </div>
+          `;
+        });
+      });
+
+    document.getElementById("feed").scrollTop=feed.scrollHeight;
   });
 }
 
