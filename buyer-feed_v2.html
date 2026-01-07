@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Buyer Feed</title>
+
+<style>
+:root{
+  --bg:#f4f6f8;
+  --card:#ffffff;
+  --border:#e2e2e2;
+  --primary:#000;
+  --muted:#666;
+  --radius:10px;
+}
+
+*{box-sizing:border-box}
+
+body{
+  font-family: Inter, Arial, sans-serif;
+  background:var(--bg);
+  margin:0;
+  color:#111;
+}
+
+/* HEADER */
+header{
+  background:#fff;
+  padding:14px 18px;
+  border-bottom:1px solid var(--border);
+  font-weight:600;
+}
+
+/* FEED */
+#feed{
+  max-width:1000px;
+  margin:20px auto;
+  padding:0 16px;
+}
+
+/* BATCH */
+.batch{
+  margin-bottom:26px;
+}
+
+.batch small{
+  color:var(--muted);
+  font-size:12px;
+}
+
+/* PRODUCT CARD */
+.card{
+  background:var(--card);
+  padding:12px;
+  margin-top:10px;
+  border-radius:var(--radius);
+  border:1px solid var(--border);
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+}
+
+.card img{
+  width:80px;
+  height:110px;
+  object-fit:cover;
+  border-radius:6px;
+  border:1px solid var(--border);
+}
+
+/* PRODUCT INFO */
+.info{
+  flex:1;
+}
+
+.info b{
+  font-size:14px;
+}
+
+.info p{
+  font-size:13px;
+  color:#444;
+  margin:6px 0;
+}
+
+.info small{
+  display:block;
+  font-size:12px;
+  color:var(--muted);
+  margin-top:3px;
+}
+
+/* ACTION */
+.actions{
+  margin-top:8px;
+}
+
+button{
+  padding:7px 12px;
+  background:#000;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  font-size:12px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<header>Stock Updates</header>
+
+<div id="feed"></div>
+
+<script>
+const API="https://script.google.com/macros/s/AKfycbzOutSpXzb0zfR5ZkJ1iq-1a1m4WImhpvn26M5oMxXzTb9J28o2rJWRG26IA2dEV3us/exec";
+const BUYER_ID="BUY001";
+const SUPPLIER_ID="SUP001";
+
+fetch(`${API}?action=getSupplierUpdates&supplierId=${SUPPLIER_ID}`)
+.then(r=>r.json()).then(j=>{
+j.data.forEach(b=>{
+const d=document.createElement("div");
+d.className="batch";
+d.innerHTML=`<small>${new Date(b.batchTime).toLocaleString()}</small>`;
+b.products.forEach(p=>{
+d.innerHTML+=`
+<div class="card">
+  <img src="${p.imageURLs[0]||''}">
+  <div class="info">
+    <b>${p.productName}</b>
+    <p>${p.description}</p>
+    <small>Sizes: ${p.sizes.join(", ")}</small>
+    <small>₹${p.pricePerPC} + ${p.gstPercent}% GST</small>
+    <div class="actions">
+      <button onclick="add('${b.batchId}','${p.productCode}')">Add to Basket</button>
+    </div>
+  </div>
+</div>`;
+});
+feed.appendChild(d);
+});
+});
+
+function add(batch,code){
+const s=prompt("Sets");
+fetch(`${API}?action=addToBasket&buyerId=${BUYER_ID}&supplierId=${SUPPLIER_ID}&batchId=${batch}&productCode=${code}&sets=${s}`)
+.then(()=>alert("Added"));
+}
+</script>
+
+</body>
+</html>
