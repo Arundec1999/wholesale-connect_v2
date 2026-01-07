@@ -2,18 +2,16 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Buyer – Basket</title>
+<title>My Basket</title>
 
 <style>
 :root{
-  --bg:#f4f6f8;
+  --bg:#efeae2;
   --card:#ffffff;
-  --border:#e2e2e2;
+  --border:#e5e5e5;
   --primary:#000;
-  --muted:#666;
-  --notice:#fff6d6;
-  --notice-border:#f2d98b;
-  --radius:10px;
+  --muted:#6b6b6b;
+  --radius:14px;
 }
 
 *{box-sizing:border-box}
@@ -22,13 +20,47 @@ body{
   font-family: Inter, Arial, sans-serif;
   background:var(--bg);
   margin:0;
-  color:#111;
+  height:100vh;
+  display:flex;
+}
+
+/* ---------------- SIDEBAR (SUPPLIERS) ---------------- */
+.sidebar{
+  width:280px;
+  background:#fff;
+  border-right:1px solid var(--border);
+  overflow-y:auto;
+}
+
+.sidebar h3{
+  margin:0;
+  padding:16px;
+  font-size:16px;
+  border-bottom:1px solid var(--border);
+}
+
+.supplier-item{
+  padding:14px 16px;
+  cursor:pointer;
+  font-size:14px;
+}
+
+.supplier-item:hover,
+.supplier-item.active{
+  background:#f4f4f4;
+}
+
+/* ---------------- MAIN ---------------- */
+.main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
 }
 
 /* HEADER */
 header{
   background:#fff;
-  padding:14px 18px;
+  padding:12px 18px;
   border-bottom:1px solid var(--border);
   display:flex;
   justify-content:space-between;
@@ -36,35 +68,40 @@ header{
 }
 
 header a{
-  text-decoration:none;
-  color:#000;
   font-size:13px;
+  color:#000;
+  text-decoration:none;
 }
 
-/* LAYOUT */
-.container{
-  max-width:900px;
-  margin:20px auto;
-  padding:0 16px;
+/* CONTENT */
+#content{
+  flex:1;
+  overflow-y:auto;
+}
+
+.content-inner{
+  max-width:420px;
+  margin:0 auto;
+  padding:18px 12px;
 }
 
 /* NOTICE */
 .notice{
-  background:var(--notice);
-  border:1px solid var(--notice-border);
+  background:#fff6d6;
+  border:1px solid #f2d98b;
   padding:12px;
-  border-radius:8px;
-  margin-bottom:14px;
+  border-radius:10px;
   font-size:13px;
+  margin-bottom:14px;
 }
 
-/* CARD */
+/* ITEM CARD */
 .card{
   background:var(--card);
-  padding:14px;
   border-radius:var(--radius);
-  border:1px solid var(--border);
-  margin-bottom:12px;
+  padding:12px;
+  margin-bottom:14px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.08);
 }
 
 .card b{
@@ -73,22 +110,23 @@ header a{
 
 .card small{
   display:block;
-  color:var(--muted);
+  font-size:12px;
+  color:#555;
   margin-top:4px;
 }
 
 /* TOTAL */
 .summary{
   background:#fff;
-  border:1px solid var(--border);
   border-radius:var(--radius);
   padding:14px;
-  margin-top:14px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.08);
+  margin-top:16px;
 }
 
 .total{
-  font-weight:600;
   font-size:17px;
+  font-weight:600;
   text-align:right;
 }
 
@@ -96,59 +134,101 @@ header a{
 .empty{
   text-align:center;
   color:#777;
+  padding:40px 0;
   font-size:14px;
-  padding:30px 0;
 }
 </style>
 </head>
 
 <body>
 
+<!-- ---------------- SIDEBAR ---------------- -->
+<div class="sidebar">
+  <h3>My Baskets</h3>
+  <div id="supplierList"></div>
+</div>
+
+<!-- ---------------- MAIN ---------------- -->
+<div class="main">
+
 <header>
-  <b>My Basket</b>
-  <a href="buyer-feed.html">← Back to Products</a>
+  <b id="title">Select a Supplier</b>
+  <a href="buyer-feed_v5.html">← Back to Feed</a>
 </header>
 
-<div class="container">
-
-  <div id="notice" class="notice" style="display:none;"></div>
-
-  <div id="basket">Loading basket…</div>
+<div id="content">
+  <div class="content-inner">
+    <div id="notice" class="notice" style="display:none;"></div>
+    <div id="basket">Select a supplier to view basket</div>
+  </div>
+</div>
 
 </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbw6Mc4ay2_69EzczKSkigCMxuWFlJ4P986cpuOw9P0rnvsoSeOONWCKRrEphio2513v/exec";
-const BUYER_ID = "BUY001";
-const SUPPLIER_ID = "SUP001";
+/* BACKEND: Wholesale_Backend_v2 */
+const API="https://script.google.com/macros/s/AKfycbw6Mc4ay2_69EzczKSkigCMxuWFlJ4P986cpuOw9P0rnvsoSeOONWCKRrEphio2513v/exec";
+const BUYER_ID="BUY001";
 
-fetch(`${API}?action=getSupplierBaskets&supplierId=${SUPPLIER_ID}`)
-  .then(r => r.json())
-  .then(j => {
-    const baskets = j.data || [];
-    const basket = baskets.find(b => b.buyerId === BUYER_ID);
+/* Supplier list (same as buyer feed) */
+const suppliers=[
+  {id:"SUP001",name:"MN Fashions Buyer Club A"},
+  {id:"SUP002",name:"AURA Jaipur"},
+  {id:"SUP003",name:"Dolly Ethnic Wear"}
+];
 
-    if (!basket || basket.items.length === 0) {
-      document.getElementById("basket").innerHTML =
-        "<div class='empty'>Your basket is empty.</div>";
-      return;
-    }
+const supplierList=document.getElementById("supplierList");
+const basketDiv=document.getElementById("basket");
+const notice=document.getElementById("notice");
+const title=document.getElementById("title");
 
-    renderBasket(basket);
-  });
+/* Render suppliers */
+suppliers.forEach(s=>{
+  const d=document.createElement("div");
+  d.className="supplier-item";
+  d.innerText=s.name;
+  d.onclick=()=>selectSupplier(s,d);
+  supplierList.appendChild(d);
+});
+
+function selectSupplier(s,el){
+  document.querySelectorAll(".supplier-item").forEach(i=>i.classList.remove("active"));
+  el.classList.add("active");
+  title.innerText=s.name;
+  loadBasket(s.id);
+}
+
+function loadBasket(supplierId){
+  basketDiv.innerHTML="Loading basket…";
+  notice.style.display="none";
+
+  fetch(`${API}?action=getSupplierBaskets&supplierId=${supplierId}`)
+    .then(r=>r.json())
+    .then(j=>{
+      const baskets=j.data||[];
+      const basket=baskets.find(b=>b.buyerId===BUYER_ID);
+
+      if(!basket || basket.items.length===0){
+        basketDiv.innerHTML="<div class='empty'>Basket is empty for this supplier.</div>";
+        return;
+      }
+
+      renderBasket(basket);
+    });
+}
 
 function renderBasket(b){
-  let html = "";
-  let grandTotal = 0;
+  let html="";
+  let grandTotal=0;
 
-  b.items.forEach(i => {
-    const amount = i.pcs * i.pricePerPC;
-    const gstAmt = amount * i.gstPercent / 100;
-    const total = amount + gstAmt;
+  b.items.forEach(i=>{
+    const amount=i.pcs*i.pricePerPC;
+    const gstAmt=amount*i.gstPercent/100;
+    const total=amount+gstAmt;
 
-    grandTotal += total;
+    grandTotal+=total;
 
-    html += `
+    html+=`
       <div class="card">
         <b>${i.productName}</b>
         <small>Sets: ${i.sets} · Pcs: ${i.pcs}</small>
@@ -158,17 +238,16 @@ function renderBasket(b){
     `;
   });
 
-  html += `
+  html+=`
     <div class="summary">
       <div class="total">Grand Total: ₹${grandTotal.toFixed(2)}</div>
     </div>
   `;
 
-  document.getElementById("basket").innerHTML = html;
+  basketDiv.innerHTML=html;
 
-  document.getElementById("notice").style.display = "block";
-  document.getElementById("notice").innerText =
-    "Basket has been shared with the supplier for approval. Stock will be locked once approved.";
+  notice.style.display="block";
+  notice.innerText="Basket sent to supplier for review. Stock will be locked once approved.";
 }
 </script>
 
