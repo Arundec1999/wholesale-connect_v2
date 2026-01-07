@@ -31,14 +31,14 @@ header{
   font-weight:600;
 }
 
-/* FEED */
+/* FEED CONTAINER */
 #feed{
   max-width:1000px;
   margin:20px auto;
   padding:0 16px;
 }
 
-/* BATCH */
+/* BATCH BLOCK */
 .batch{
   margin-bottom:26px;
 }
@@ -114,39 +114,52 @@ button{
 <div id="feed"></div>
 
 <script>
-const API="https://https://script.google.com/macros/s/AKfycbw6Mc4ay2_69EzczKSkigCMxuWFlJ4P986cpuOw9P0rnvsoSeOONWCKRrEphio2513v/exec";
+/* BACKEND: Wholesale_Backend_v2 (Improvement Environment) */
+const API="https://script.google.com/macros/s/AKfycbw6Mc4ay2_69EzczKSkigCMxuWFlJ4P986cpuOw9P0rnvsoSeOONWCKRrEphio2513v/exec";
+
 const BUYER_ID="BUY001";
 const SUPPLIER_ID="SUP001";
 
 fetch(`${API}?action=getSupplierUpdates&supplierId=${SUPPLIER_ID}`)
-.then(r=>r.json()).then(j=>{
-j.data.forEach(b=>{
-const d=document.createElement("div");
-d.className="batch";
-d.innerHTML=`<small>${new Date(b.batchTime).toLocaleString()}</small>`;
-b.products.forEach(p=>{
-d.innerHTML+=`
-<div class="card">
-  <img src="${p.imageURLs[0]||''}">
-  <div class="info">
-    <b>${p.productName}</b>
-    <p>${p.description}</p>
-    <small>Sizes: ${p.sizes.join(", ")}</small>
-    <small>₹${p.pricePerPC} + ${p.gstPercent}% GST</small>
-    <div class="actions">
-      <button onclick="add('${b.batchId}','${p.productCode}')">Add to Basket</button>
-    </div>
-  </div>
-</div>`;
-});
-feed.appendChild(d);
-});
+.then(r=>r.json())
+.then(j=>{
+  (j.data || []).forEach(b=>{
+    const d=document.createElement("div");
+    d.className="batch";
+    d.innerHTML=`<small>${new Date(b.batchTime).toLocaleString()}</small>`;
+
+    b.products.forEach(p=>{
+      d.innerHTML+=`
+        <div class="card">
+          <img src="${p.imageURLs[0] || ''}">
+          <div class="info">
+            <b>${p.productName}</b>
+            <p>${p.description || ''}</p>
+            <small>Sizes: ${p.sizes.join(", ")}</small>
+            <small>₹${p.pricePerPC} + ${p.gstPercent}% GST</small>
+            <div class="actions">
+              <button onclick="add('${b.batchId}','${p.productCode}')">
+                Add to Basket
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    feed.appendChild(d);
+  });
 });
 
 function add(batch,code){
-const s=prompt("Sets");
-fetch(`${API}?action=addToBasket&buyerId=${BUYER_ID}&supplierId=${SUPPLIER_ID}&batchId=${batch}&productCode=${code}&sets=${s}`)
-.then(()=>alert("Added"));
+  const s=prompt("Enter number of sets");
+  fetch(`${API}?action=addToBasket`
+    + `&buyerId=${BUYER_ID}`
+    + `&supplierId=${SUPPLIER_ID}`
+    + `&batchId=${batch}`
+    + `&productCode=${code}`
+    + `&sets=${s}`
+  ).then(()=>alert("Added to basket"));
 }
 </script>
 
